@@ -1,5 +1,8 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import filedialog
+
+from gui.genetic_algorithm_settings_window import GeneticAlgorithmSettingsWindow
 from models.street_system import StreetSystem
 from gui.edge_properties_window import EdgePropertiesWindow
 from gui.node_properties_window import NodePropertiesWindow
@@ -9,16 +12,112 @@ class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Optimización de tráfico")
-        self.geometry("800x600")
-
+        self.geometry("1000x600")
+        self.node_items = {}
         self.street_system = StreetSystem()
         self.mode = "add_node"
         self.edge_start = None
         self.last_click_time = 0
         self.click_delay = 300
+        self.node_menu = tk.Menu(self, tearoff=0)
+        self.create_widgets()
+        self.create_data_table()
+
+
+
+    def create_widgets(self):
         self.create_menu()
         self.create_canvas()
+        self.create_context_menu()
 
+    def create_context_menu(self):
+        self.node_menu.add_command(label="Eliminar nodo", command=self.delete_node)
+        self.node_menu.add_command(label="Mover nodo", command=self.move_node)
+
+    def show_context_menu(self, event):
+        item = self.canvas.find_closest(event.x, event.y)[0]
+        tags = self.canvas.gettags(item)
+        if "node" in tags:
+            self.selected_node = item
+            try:
+                self.node_menu.tk_popup(event.x_root, event.y_root)
+            finally:
+                self.node_menu.grab_release()
+        else:
+            self.selected_node = None
+
+    def delete_node(self):
+        if self.selected_node:
+            node_id = self.node_items.get(self.selected_node)
+            if node_id:
+                self.street_system.remove_node(int(node_id))
+                self.canvas.delete(self.selected_node)
+                for item, item_node_id in self.node_items.items():
+                    if item_node_id == node_id:
+                        self.canvas.delete(item)
+                self.node_items = {k: v for k, v in self.node_items.items() if v != node_id}
+                self.draw_system()
+                print(f"Nodo {node_id} eliminado")
+
+    def move_node(self):
+        if self.selected_node:
+            node_id = self.node_items.get(self.selected_node)
+            if node_id:
+                oval_item = None
+                text_item = None
+                for item, item_node_id in self.node_items.items():
+                    if item_node_id == node_id:
+                        if self.canvas.type(item) == "oval":
+                            oval_item = item
+                        elif self.canvas.type(item) == "text":
+                            text_item = item
+                if oval_item and text_item:
+                    self.canvas.bind("<B1-Motion>", lambda event: self.drag_node(event, node_id, oval_item, text_item))
+                    self.canvas.bind("<ButtonRelease-1>", self.drop_node)
+
+    def drag_node(self, event, node_id, oval_item, text_item):
+        node = next((node for node in self.street_system.nodes if node['node_id'] == int(node_id)), None)
+        if node:
+            node['x'] = event.x
+            node['y'] = event.y
+            self.canvas.coords(oval_item, event.x - 20, event.y - 20, event.x + 20, event.y + 20)
+            self.canvas.coords(text_item, event.x, event.y)
+            self.draw_system()
+
+    def drop_node(self, event):
+        self.canvas.unbind("<B1-Motion>")
+        self.canvas.unbind("<ButtonRelease-1>")
+
+    def create_data_table(self):
+        self.data_frame = ttk.Frame(self)
+        self.data_frame.pack(side='right', fill='y', expand=False)
+
+        self.tree = ttk.Treeview(self.data_frame, columns=('ID', 'Tipo', 'Tiempo'), show='headings')
+        self.tree.heading('ID', text='ID')
+        self.tree.heading('Tipo', text='Tipo')
+        self.tree.heading('Tiempo', text='Tiempo o  Capacidad')
+        self.tree.pack(side='top', fill='both', expand=True)
+
+        update_button = tk.Button(self.data_frame, text="Actualizar Datos", command=self.update_data_table)
+        update_button.pack(side='bottom', pady=10)
+
+    def update_data_table(self):
+        for item in self.tree.get_children():
+            self.tree.delete(item)
+
+        for node in self.street_system.nodes:
+            if 'node_id' in node and 'min_time_percentage' in node:
+                self.tree.insert('', 'end', values=(node['node_id'], 'Nodo', node['min_time_percentage']))
+
+        for edge in self.street_system.edges:
+            if 'edge_id' in edge and 'capacity' in edge:
+                self.tree.insert('', 'end', values=(edge['edge_id'], 'Arista', edge['capacity']))
+                print("edge:",edge)
+
+    def add_edge(self, start_node, end_node, time):
+        edge = {'id': len(self.street_system.edges) + 1, 'start_node': start_node, 'end_node': end_node, 'time': time}
+        self.street_system.edges.append(edge)
+        print("Arista añadida:", edge)
 
     def create_menu(self):
         menu_bar = tk.Menu(self)
@@ -37,11 +136,23 @@ class MainWindow(tk.Tk):
         edit_menu.add_command(label="Agregar arista", command=self.set_mode_add_edge)
         menu_bar.add_cascade(label="Editar", menu=edit_menu)
 
+        settings_menu = tk.Menu(menu_bar, tearoff=0)
+        settings_menu.add_command(label="Configuración del Algoritmo Genético",
+                                  command=self.open_genetic_algorithm_settings)
+        menu_bar.add_cascade(label="Configuración", menu=settings_menu)
+
+    def open_genetic_algorithm_settings(self):
+        genetic_algorithm_settings_window = GeneticAlgorithmSettingsWindow(self)
+        genetic_algorithm_settings_window.grab_set()
+
 
     def create_canvas(self):
         self.canvas = tk.Canvas(self, bg="white")
         self.canvas.pack(fill=tk.BOTH, expand=True)
         self.canvas.bind("<Button-1>", self.on_canvas_click)
+
+        self.canvas.pack(padx=10, pady=10)
+        self.canvas.bind("<Button-3>", self.show_context_menu)  # Botón derecho del ratón
 
     def new_system(self):
         self.street_system = StreetSystem()
@@ -60,17 +171,23 @@ class MainWindow(tk.Tk):
 
     def draw_system(self):
         self.canvas.delete("all")
+        self.node_items = {}
 
         for node in self.street_system.get_nodes():
             x = node['x']
             y = node['y']
             node_id = node['node_id']
-            self.canvas.create_oval(x - 10, y - 10, x + 10, y + 10, fill="white", outline="black")
-            self.canvas.create_text(x, y, text=str(node_id))
+            oval_item = self.canvas.create_oval(x - 20, y - 20, x + 20, y + 20, fill="white", outline="black",
+                                                tags=("node",))
+            text_item = self.canvas.create_text(x, y, text=str(node_id), tags=("node",))
+            self.node_items[oval_item] = node_id
+            self.node_items[text_item] = node_id
 
         for edge in self.street_system.get_edges():
-            source_node = next(node for node in self.street_system.get_nodes() if node['node_id'] == edge['source_node'])
-            target_node = next(node for node in self.street_system.get_nodes() if node['node_id'] == edge['target_node'])
+            source_node = next(
+                node for node in self.street_system.get_nodes() if node['node_id'] == edge['source_node'])
+            target_node = next(
+                node for node in self.street_system.get_nodes() if node['node_id'] == edge['target_node'])
             x1, y1 = source_node['x'], source_node['y']
             x2, y2 = target_node['x'], target_node['y']
             self.canvas.create_line(x1, y1, x2, y2, arrow="last")
@@ -78,7 +195,6 @@ class MainWindow(tk.Tk):
     def on_canvas_click(self, event):
         current_click_time = int(round(time.time() * 1000))
         if (current_click_time - self.last_click_time) < self.click_delay:
-            # Es un doble clic
             self.handle_double_click(event)
         else:
             self.after(self.click_delay, self.handle_single_click, event, current_click_time)

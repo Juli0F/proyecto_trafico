@@ -8,7 +8,6 @@ class NodePropertiesWindow(tk.Toplevel):
         self.node = node
         self.title(f"Propiedades del nodo {node['node_id']}")
 
-        # Asumimos que los semáforos ya tienen porcentajes, pero agregamos un porcentaje mínimo
         self.traffic_light_timings = node.get('traffic_light_timings', {})
         self.min_time_percentage = tk.DoubleVar(value=node.get('min_time_percentage', 0.0))
 
@@ -18,13 +17,11 @@ class NodePropertiesWindow(tk.Toplevel):
         main_frame = tk.Frame(self)
         main_frame.pack(padx=10, pady=10)
 
-        # Campo para porcentaje mínimo de tiempo
         min_time_label = tk.Label(main_frame, text="Porcentaje mínimo de tiempo para semáforos:")
         min_time_label.pack(padx=5, pady=5)
         min_time_entry = tk.Entry(main_frame, textvariable=self.min_time_percentage)
         min_time_entry.pack(padx=5, pady=5)
 
-        # Los campos existentes para los tiempos de semáforo
         self.entry_frame = tk.Frame(main_frame)
         self.entry_frame.pack(padx=5, pady=5)
         self.entries = []
@@ -41,7 +38,6 @@ class NodePropertiesWindow(tk.Toplevel):
         save_button.pack(pady=10)
 
     def save_properties(self):
-        # Actualizar los porcentajes de tiempo de los semáforos y el porcentaje mínimo
         for edge_id, entry in self.entries:
             self.traffic_light_timings[edge_id] = entry.get()
 
