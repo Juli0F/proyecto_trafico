@@ -5,9 +5,12 @@ class Arista:
         self.destino = destino
         self.min_vehiculos = min_vehiculos
         self.max_vehiculos = max_vehiculos
+        self.time = 0
 
     def __repr__(self):
-        return (f"Arista(destino={self.destino.id_nodo},"
-                f" capacidad_min={self.capacidad_minima},"
-                f" capacidad_max={self.capacidad_maxima},"
-                f" tiempo_semaforo={self.tiempo_semaforo})")
+        return (f"Arista(origen={self.origen},"
+                f"destino={self.destino},"
+                f" capacidad_min={self.min_vehiculos},"
+                f" capacidad_max={self.max_vehiculos},"
+                f" tiempo = {self.time})\n")
+                # f" tiempo_semaforo={self.tiempo_semaforo})")

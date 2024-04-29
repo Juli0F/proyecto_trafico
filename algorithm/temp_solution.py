@@ -6,134 +6,127 @@ import random
 class SolutionAG:
 
     def __init__(self, nodos, aristas):
-        self.poblacion_size = 500
-        self.num_generaciones = 100
-        self.tasa_mutacion = 0.1
+        self.population_size = 100
+        self.mutation_rate = 0.01
+        self.crossover_rate = 0.7
+        self.generations = 100
         self.nodos = nodos
         print("Nodos generados",self.nodos)
         self.aristas = aristas
         for arista in self.aristas:
             arista.origen.aristas.append(arista)
 
-    def __fitness(self, solucion, total_vehiculos):
-        flujo_total = 0
-        capacidad_total = sum(arista.max_vehiculos for nodo in self.nodos.values() for arista in nodo.aristas)
-
-        for nodo_id, tiempos in solucion.items():
-            nodo = self.nodos[nodo_id]
-
-            for i, arista in enumerate(nodo.aristas):
-                tiempo_porcentaje = tiempos[i]
-                capacidad_porcentaje = (arista.max_vehiculos - arista.min_vehiculos) / capacidad_total
-
-                if tiempo_porcentaje >= capacidad_porcentaje:
-                    flujo = arista.max_vehiculos
+    # def initialize_population(self):
+    #     for _ in range(self.population_size):
+    #         individual = {}
+    #         for nodo in self.nodos:
+    #             if nodo.type != Type.SALIDA:
+    #                 total_aristas = len(nodo.aristas)
+    #                 individual[nodo.nodo_id] = [1 / total_aristas] * total_aristas
+    #         self.population.append(individual)
+    def initialize_population(self):
+        self.population = []  # Asegúrate de que la población está vacía antes de inicializar
+        for _ in range(self.population_size):
+            individual = {}
+            for nodo_id, nodo in self.nodos.items():
+                total_aristas = len(nodo.aristas)
+                # Si no hay aristas, establecemos una distribución de tiempo de cero para mantener la estructura del individuo
+                if total_aristas == 0:
+                    individual[nodo_id] = [0]  # Puedes ajustar esto según sea necesario para nodos sin aristas
                 else:
-                    flujo = arista.min_vehiculos + (tiempo_porcentaje / capacidad_porcentaje) * (
-                                arista.max_vehiculos - arista.min_vehiculos)
+                    # Para nodos con aristas, distribuimos el tiempo de manera equitativa
+                    individual[nodo_id] = [1 / total_aristas] * total_aristas
 
-                flujo = min(flujo, arista.max_vehiculos)
-                flujo_total += flujo
+            self.population.append(individual)
 
-        flujo_total = min(flujo_total, total_vehiculos)
+    def fitness(self, individual):
+        total_vehiculos_salida = 0
+        for nodo_id, nodo in self.nodos.items():
+            if nodo.type == Type.SALIDA:
+                if nodo_id not in individual:
+                    # Si el nodo de salida no está en el individuo, entonces no podemos calcular el flujo para ese nodo.
+                    print(f"El nodo de salida {nodo_id} no está presente en el individuo.")
+                    continue
 
-        return flujo_total
+                # Calcular el flujo de salida basado en la distribución del tiempo y las capacidades de las aristas
+                for i, arista in enumerate(nodo.aristas):
+                    flujo = individual[nodo_id][i] * arista.max_vehiculos
+                    total_vehiculos_salida += flujo
+                    print(f"Flujo del nodo {nodo_id}, arista {i}: {flujo}")
 
-    def __crear_solucion(self):
-        solucion = {}
-        for nodo in self.nodos.values():
-            tiempos = [random.random() for _ in range(len(nodo.aristas))]
-            total = sum(tiempos)
-            tiempos = [tiempo / total for tiempo in tiempos]
-            solucion[nodo.nodo_id] = tiempos
-        return solucion
+        if total_vehiculos_salida == 0:
+            print("Advertencia: el total de vehículos de salida calculado es 0.")
+        return total_vehiculos_salida
 
-    def __seleccion_ruleta(self, poblacion, total_vehiculos):
-        fitness_total = sum(self.__fitness(solucion, total_vehiculos) for solucion in poblacion)
+    # def fitness(self, individual):
+    #     # Simular el flujo de tráfico basado en la distribución de tiempo del individuo
+    #     # Para simplificar, asumiremos que la aptitud es el total de vehículos que salen de la red
+    #     total_vehiculos_salida = 0
+    #     for nodo_id, nodo in self.nodos.items():
+    #         if nodo.type == Type.SALIDA:
+    #
+    #             # Calcular el flujo de salida basado en la distribución del tiempo y las capacidades de las aristas
+    #             for i, arista in enumerate(nodo.aristas):
+    #                 flujo = individual[nodo.nodo_id][i] * arista.max_vehiculos
+    #                 total_vehiculos_salida += flujo
+    #     # La aptitud podría ser simplemente el flujo total de salida, ya que queremos maximizarlo
+    #     return total_vehiculos_salida
 
-        if fitness_total == 0:
-            probabilidades = [1 / len(poblacion) for _ in poblacion]
-        else:
-            probabilidades = [self.__fitness(solucion, total_vehiculos) / fitness_total for solucion in poblacion]
+    # def roulette_selection(self):
+    #     total_fitness = sum(self.fitness(individual) for individual in self.population)
+    #     selection_probabilities = [self.fitness(individual) / total_fitness for individual in self.population]
+    #     selected_indices = random.choices(range(self.population_size), weights=selection_probabilities,
+    #                                       k=self.population_size)
+    #     parents = [self.population[i] for i in selected_indices]
+    #     return parents
 
-        indices = list(range(len(poblacion)))
-        seleccionados = random.choices(indices, probabilidades, k=len(poblacion))
-        return [poblacion[i] for i in seleccionados]
+    def roulette_selection(self):
+        total_fitness = sum(self.fitness(individual) for individual in self.population)
+        if total_fitness == 0:
+            raise ValueError("La aptitud total de la población es cero, la selección por ruleta no puede proceder.")
 
-    def __cruzar(self, solucion1, solucion2):
-        nueva_solucion = {}
-        for nodo_id in solucion1.keys():
-            if random.random() < 0.5:
-                nueva_solucion[nodo_id] = solucion1[nodo_id]
-            else:
-                nueva_solucion[nodo_id] = solucion2[nodo_id]
-        return nueva_solucion
+        selection_probabilities = [self.fitness(individual) / total_fitness for individual in self.population]
+        selected_indices = random.choices(range(self.population_size), weights=selection_probabilities,
+                                          k=self.population_size)
+        parents = [self.population[i] for i in selected_indices]
+        return parents
 
-    def __mutar(self, solucion):
-        for nodo_id, tiempos in solucion.items():
-            if random.random() < self.tasa_mutacion and len(tiempos) > 0:
-                indice = random.randint(0, len(tiempos) - 1)
-                tiempos[indice] = random.random()
-                total = sum(tiempos)
-                tiempos = [tiempo / total for tiempo in tiempos]
-                solucion[nodo_id] = tiempos
-        return solucion
+    def crossover(self, parent1, parent2):
+        child = {}
+        for nodo_id in parent1.keys():
+            child[nodo_id] = []
+            for i in range(len(parent1[nodo_id])):
+                if random.random() < self.crossover_rate:
+                    child[nodo_id].append(parent1[nodo_id][i])
+                else:
+                    child[nodo_id].append(parent2[nodo_id][i])
+        return child
 
-    def __algoritmo_genetico(self, total_vehiculos):
-        poblacion = [self.__crear_solucion() for _ in range(self.poblacion_size)]
+    def mutate(self, individual):
+        for nodo_id, tiempos in individual.items():
+            if random.random() < self.mutation_rate:
+                semaforo_idx = random.randrange(len(tiempos))
+                mutation_amount = random.uniform(-0.1, 0.1)
+                individual[nodo_id][semaforo_idx] = max(0, min(1, individual[nodo_id][semaforo_idx] + mutation_amount))
+        return individual
 
-        for generacion in range(self.num_generaciones):
-            poblacion = self.__seleccion_ruleta(poblacion, total_vehiculos)
-            nueva_poblacion = []
-
-            for i in range(0, len(poblacion), 2):
-                padre1 = poblacion[i]
-                padre2 = poblacion[i + 1]
-                hijo1 = self.__cruzar(padre1, padre2)
-                hijo2 = self.__cruzar(padre1, padre2)
-                hijo1 = self.__mutar(hijo1)
-                hijo2 = self.__mutar(hijo2)
-                nueva_poblacion.append(hijo1)
-                nueva_poblacion.append(hijo2)
-
-            poblacion = nueva_poblacion
-
-        mejor_solucion = max(poblacion, key=lambda  solucion: self.__fitness(solucion, total_vehiculos))
-        return mejor_solucion
-
-    def __presentar_solucion(self, mejor_solucion, total_vehiculos):
-        flujo_acumulado = {nodo_id: 0 for nodo_id in self.nodos.keys()}
-        nodo_entrada = next(iter(self.nodos))
-        flujo_acumulado[nodo_entrada] = total_vehiculos
-
-        visitados = set()
-        cola = [nodo_entrada]
-
-        while cola:
-            nodo_id = cola.pop(0)
-            if nodo_id in visitados:
-                continue
-            visitados.add(nodo_id)
-
-            nodo = self.nodos[nodo_id]
-            tiempos = mejor_solucion[nodo_id]
-
-            total_tiempo = sum(tiempos)
-            tiempos_normalizados = [tiempo / total_tiempo for tiempo in tiempos]
-
-            for i, arista in enumerate(nodo.aristas):
-                tiempo_porcentaje = tiempos_normalizados[i]
-                flujo = min(flujo_acumulado[nodo_id], arista.max_vehiculos)
-                flujo_arista = int(flujo * tiempo_porcentaje)
-                flujo_acumulado[arista.destino.id] += flujo_arista
-
-                print(
-                    f"{nodo_id} -> {arista.destino.id}: [{{Porcentaje de tiempo: {tiempo_porcentaje:.2f}}}, {{Vehiculos: {flujo_arista}}}]")
-
-                if arista.destino.id not in visitados:
-                    cola.append(arista.destino.id)
 
     def exec(self):
-        mejor_solucion = self.__algoritmo_genetico(300)
-        print("Mejor solución encontrada:")
-        print(self.__presentar_solucion(mejor_solucion,300))
+        print("Executando Solution")
+        self.initialize_population()
+
+        for generation in range(self.generations):
+
+            fitness_results = [self.fitness(individual) for individual in self.population]
+
+            parents = self.roulette_selection()
+
+            children = self.crossover(parents)
+
+            mutated_children = [self.mutate(child) for child in children]
+
+            self.population = mutated_children
+
+            print(f"Generación {generation}: Mejor resultado {max(fitness_results)}")
+
+        return max(self.population, key=self.fitness)

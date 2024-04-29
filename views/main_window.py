@@ -4,8 +4,7 @@ from tkinter import filedialog
 import time
 
 from models.Type import Type
-from models.config import SIZE_OVAL, SIZE_EDGE, COLOR_IN, COLOR_OUT, COLOR_NORMAL, SIZE_ARROW
-from views.dialog import Dialog
+from models.config import SIZE_OVAL, SIZE_EDGE, COLOR_IN, COLOR_OUT, COLOR_NORMAL, SIZE_ARROW, SIZE_TEXT
 from views.genetic_algorithm_settings_window import GeneticAlgorithmSettingsWindow
 from models.street_system import StreetSystem
 from views.edge_properties_window import EdgePropertiesWindow
@@ -68,9 +67,9 @@ class MainWindow(tk.Tk):
         analyze_button.pack(side='top', pady=20)
 
     def analyze(self):
-        if self.population_size == 0 or self.mutation_rate == 0 or self.num_generation == 0 or self.target_fitness == 0:
-            messagebox.showinfo( "Informacion", "Debe ingresar una configuracion")
-            return;
+        # if self.population_size == 0 or self.mutation_rate == 0 or self.num_generation == 0 or self.target_fitness == 0:
+        #     messagebox.showinfo( "Informacion", "Debe ingresar una configuracion")
+        #     return;
 
         controller = AlgorithmController()
         controller.convert(self.street_system)
@@ -206,7 +205,7 @@ class MainWindow(tk.Tk):
             color = COLOR_IN if node_type == Type.ENTRADA else COLOR_OUT if node_type == Type.SALIDA else COLOR_NORMAL
             oval_item = self.canvas.create_oval(x - SIZE_OVAL, y - SIZE_OVAL, x + SIZE_OVAL, y + SIZE_OVAL, fill=color, outline="black",
                                                 tags=("node", str(node_id)))
-            text_item = self.canvas.create_text(x , y, text=str(node_id), tags=("node", str(node_id)))
+            text_item = self.canvas.create_text(x , y, font=('Helvetica',SIZE_TEXT ), text=str(node_id), tags=("node", str(node_id)))
             self.node_items[oval_item] = node_id
             self.node_items[text_item] = node_id
 
@@ -218,6 +217,17 @@ class MainWindow(tk.Tk):
             x1, y1 = source_node['x'], source_node['y']
             x2, y2 = target_node['x'], target_node['y']
             self.canvas.create_line(x1, y1, x2, y2, arrow="last", width=SIZE_EDGE, arrowshape=SIZE_ARROW)
+
+
+            mid_x = (x1 + x2) / 2
+            mid_y = (y1 + y2) / 2
+
+            text_offset = 10
+            capacity_min = edge['capacity_min'] if 'capacity_min' in edge else 0
+            capacity_max = edge['capacity'] if 'capacity' in edge else 0
+            time = edge['time'] if 'time' in edge else 0
+            edge_label = f"min: {capacity_min}\n MAX: {capacity_max}\n Tiempo: {time}" #
+            self.canvas.create_text(mid_x, mid_y - text_offset, text=edge_label, font=('Helvetica', 10))
 
     def load_system(self):
         file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
