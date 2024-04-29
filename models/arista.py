@@ -1,10 +1,10 @@
 class Arista:
-    def __init__(self,origen, destino, capacidad_minima, capacidad_maxima, tiempo_semaforo):
+
+    def __init__(self, origen, destino, min_vehiculos, max_vehiculos):
         self.origen = origen
         self.destino = destino
-        self.capacidad_minima = capacidad_minima if capacidad_minima is not None else 0
-        self.capacidad_maxima = capacidad_maxima
-        self.tiempo_semaforo = tiempo_semaforo
+        self.min_vehiculos = min_vehiculos
+        self.max_vehiculos = max_vehiculos
 
     def __repr__(self):
         return (f"Arista(destino={self.destino.id_nodo},"

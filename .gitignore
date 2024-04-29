@@ -1,5 +1,4 @@
+.venv/
+venv/
 .idea/**
 todo.txt
-algorithm/main_temp.py
-algorithm/temp.py
-algorithm/temp_solution.py

@@ -1,8 +1,11 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter import filedialog
 import time
 
+from models.Type import Type
+from models.config import SIZE_OVAL, SIZE_EDGE, COLOR_IN, COLOR_OUT, COLOR_NORMAL, SIZE_ARROW
+from views.dialog import Dialog
 from views.genetic_algorithm_settings_window import GeneticAlgorithmSettingsWindow
 from models.street_system import StreetSystem
 from views.edge_properties_window import EdgePropertiesWindow
@@ -26,6 +29,12 @@ class MainWindow(tk.Tk):
         self.node_menu = tk.Menu(self, tearoff=0)
         self.create_widgets()
         self.create_data_table()
+        self.dialogo = None#Dialog(self)
+
+        self.population_size = 0
+        self.mutation_rate = 0
+        self.num_generation = 0
+        self.target_fitness = 0
 
 
 
@@ -59,6 +68,10 @@ class MainWindow(tk.Tk):
         analyze_button.pack(side='top', pady=20)
 
     def analyze(self):
+        if self.population_size == 0 or self.mutation_rate == 0 or self.num_generation == 0 or self.target_fitness == 0:
+            messagebox.showinfo( "Informacion", "Debe ingresar una configuracion")
+            return;
+
         controller = AlgorithmController()
         controller.convert(self.street_system)
     def delete_node(self):
@@ -157,8 +170,12 @@ class MainWindow(tk.Tk):
         menu_bar.add_cascade(label="Configuración", menu=settings_menu)
 
     def open_genetic_algorithm_settings(self):
-        genetic_algorithm_settings_window = GeneticAlgorithmSettingsWindow(self)
-        genetic_algorithm_settings_window.grab_set()
+        settings_ag = GeneticAlgorithmSettingsWindow(self)
+        settings_ag.grab_set()
+        self.population_size = settings_ag.population_size
+        self.mutation_rate = settings_ag.mutation_rate
+        self.num_generation = settings_ag.num_generations
+        self.target_fitness = settings_ag.target_fitness
 
     def create_canvas(self):
         self.canvas = tk.Canvas(self, bg="white")
@@ -186,10 +203,10 @@ class MainWindow(tk.Tk):
             y = node['y']
             node_id = node['node_id']
             node_type = node.get('node_type', None)
-            color = 'green' if node_type == 'entrada' else 'blue' if node_type == 'salida' else 'white'
-            oval_item = self.canvas.create_oval(x - 20, y - 20, x + 20, y + 20, fill=color, outline="black",
+            color = COLOR_IN if node_type == Type.ENTRADA else COLOR_OUT if node_type == Type.SALIDA else COLOR_NORMAL
+            oval_item = self.canvas.create_oval(x - SIZE_OVAL, y - SIZE_OVAL, x + SIZE_OVAL, y + SIZE_OVAL, fill=color, outline="black",
                                                 tags=("node", str(node_id)))
-            text_item = self.canvas.create_text(x, y, text=str(node_id), tags=("node", str(node_id)))
+            text_item = self.canvas.create_text(x , y, text=str(node_id), tags=("node", str(node_id)))
             self.node_items[oval_item] = node_id
             self.node_items[text_item] = node_id
 
@@ -200,7 +217,7 @@ class MainWindow(tk.Tk):
                 node for node in self.street_system.get_nodes() if node['node_id'] == edge['target_node'])
             x1, y1 = source_node['x'], source_node['y']
             x2, y2 = target_node['x'], target_node['y']
-            self.canvas.create_line(x1, y1, x2, y2, arrow="last")
+            self.canvas.create_line(x1, y1, x2, y2, arrow="last", width=SIZE_EDGE, arrowshape=SIZE_ARROW)
 
     def load_system(self):
         file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
@@ -236,7 +253,7 @@ class MainWindow(tk.Tk):
 
     def on_canvas_move(self, event):
         self.canvas.delete("edge_preview")
-        self.canvas.create_line(self.edge_start[0], self.edge_start[1], event.x, event.y, tags="edge_preview")
+        self.canvas.create_line(self.edge_start[0], self.edge_start[1], event.x, event.y, tags="edge_preview", width=SIZE_EDGE, arrowshape=SIZE_ARROW)
 
     def on_canvas_release(self, event):
         self.canvas.unbind("<Motion>")
@@ -305,11 +322,11 @@ class MainWindow(tk.Tk):
 
     def mark_as_entry_node(self):
         node_id = self.canvas.gettags(self.selected_node)[1]
-        self.street_system.update_node_type(node_id, 'entrada')
-        self.canvas.itemconfig(self.selected_node, fill="green")
+        self.street_system.update_node_type(node_id, Type.ENTRADA)
+        self.canvas.itemconfig(self.selected_node, fill=COLOR_IN)
 
     def mark_as_exit_node(self):
         node_id = self.canvas.gettags(self.selected_node)[1]
-        self.street_system.update_node_type(node_id, 'salida')
-        self.canvas.itemconfig(self.selected_node, fill="blue")
+        self.street_system.update_node_type(node_id, Type.SALIDA)
+        self.canvas.itemconfig(self.selected_node, fill=COLOR_OUT)
 
