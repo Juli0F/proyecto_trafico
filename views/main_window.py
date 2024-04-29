@@ -1,12 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-
-from gui.genetic_algorithm_settings_window import GeneticAlgorithmSettingsWindow
-from models.street_system import StreetSystem
-from gui.edge_properties_window import EdgePropertiesWindow
-from gui.node_properties_window import NodePropertiesWindow
 import time
+
+from views.genetic_algorithm_settings_window import GeneticAlgorithmSettingsWindow
+from models.street_system import StreetSystem
+from views.edge_properties_window import EdgePropertiesWindow
+from views.node_properties_window import NodePropertiesWindow
+
+from controller.algorithm_controller import AlgorithmController
+
+
 
 class MainWindow(tk.Tk):
     def __init__(self):
@@ -29,10 +33,14 @@ class MainWindow(tk.Tk):
         self.create_menu()
         self.create_canvas()
         self.create_context_menu()
+        self.create_analyze_button()
 
     def create_context_menu(self):
         self.node_menu.add_command(label="Eliminar nodo", command=self.delete_node)
         self.node_menu.add_command(label="Mover nodo", command=self.move_node)
+        self.node_menu.add_command(label="Marcar como nodo de entrada", command=self.mark_as_entry_node)
+        self.node_menu.add_command(label="Marcar como nodo de salida", command=self.mark_as_exit_node)
+
 
     def show_context_menu(self, event):
         item = self.canvas.find_closest(event.x, event.y)[0]
@@ -46,6 +54,13 @@ class MainWindow(tk.Tk):
         else:
             self.selected_node = None
 
+    def create_analyze_button(self):
+        analyze_button = tk.Button(self, text="Analizar", command=self.analyze)
+        analyze_button.pack(side='top', pady=20)
+
+    def analyze(self):
+        controller = AlgorithmController()
+        controller.convert(self.street_system)
     def delete_node(self):
         if self.selected_node:
             node_id = self.node_items.get(self.selected_node)
@@ -145,7 +160,6 @@ class MainWindow(tk.Tk):
         genetic_algorithm_settings_window = GeneticAlgorithmSettingsWindow(self)
         genetic_algorithm_settings_window.grab_set()
 
-
     def create_canvas(self):
         self.canvas = tk.Canvas(self, bg="white")
         self.canvas.pack(fill=tk.BOTH, expand=True)
@@ -163,12 +177,6 @@ class MainWindow(tk.Tk):
         if file_path:
             self.street_system.save(file_path)
 
-    def load_system(self):
-        file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
-        if file_path:
-            self.street_system.load(file_path)
-            self.draw_system()
-
     def draw_system(self):
         self.canvas.delete("all")
         self.node_items = {}
@@ -177,9 +185,11 @@ class MainWindow(tk.Tk):
             x = node['x']
             y = node['y']
             node_id = node['node_id']
-            oval_item = self.canvas.create_oval(x - 20, y - 20, x + 20, y + 20, fill="white", outline="black",
-                                                tags=("node",))
-            text_item = self.canvas.create_text(x, y, text=str(node_id), tags=("node",))
+            node_type = node.get('node_type', None)
+            color = 'green' if node_type == 'entrada' else 'blue' if node_type == 'salida' else 'white'
+            oval_item = self.canvas.create_oval(x - 20, y - 20, x + 20, y + 20, fill=color, outline="black",
+                                                tags=("node", str(node_id)))
+            text_item = self.canvas.create_text(x, y, text=str(node_id), tags=("node", str(node_id)))
             self.node_items[oval_item] = node_id
             self.node_items[text_item] = node_id
 
@@ -191,6 +201,12 @@ class MainWindow(tk.Tk):
             x1, y1 = source_node['x'], source_node['y']
             x2, y2 = target_node['x'], target_node['y']
             self.canvas.create_line(x1, y1, x2, y2, arrow="last")
+
+    def load_system(self):
+        file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
+        if file_path:
+            self.street_system.load(file_path)
+            self.draw_system()
 
     def on_canvas_click(self, event):
         current_click_time = int(round(time.time() * 1000))
@@ -231,7 +247,7 @@ class MainWindow(tk.Tk):
         if source_node and target_node:
             edge_id = len(self.street_system.get_edges()) + 1
             edge = {'edge_id': edge_id, 'source_node': source_node['node_id'], 'target_node': target_node['node_id'],
-                    'direction': 'uni', 'capacity': 0}
+                    'direction': str(source_node['node_id']) + " -> "+ str(target_node['node_id']), 'capacity': 0}
             self.street_system.add_edge(edge)
             self.draw_system()
         self.canvas.bind("<Button-1>", self.on_canvas_click)
@@ -256,6 +272,7 @@ class MainWindow(tk.Tk):
 
     def on_edge_double_click(self, event):
         edge = self.find_nearest_edge(event.x, event.y)
+        print("edge", edge)
         if edge:
             self.show_edge_properties_window(edge)
 
@@ -285,3 +302,14 @@ class MainWindow(tk.Tk):
     def show_edge_properties_window(self, edge):
         edge_properties_window = EdgePropertiesWindow(self, edge)
         edge_properties_window.grab_set()
+
+    def mark_as_entry_node(self):
+        node_id = self.canvas.gettags(self.selected_node)[1]
+        self.street_system.update_node_type(node_id, 'entrada')
+        self.canvas.itemconfig(self.selected_node, fill="green")
+
+    def mark_as_exit_node(self):
+        node_id = self.canvas.gettags(self.selected_node)[1]
+        self.street_system.update_node_type(node_id, 'salida')
+        self.canvas.itemconfig(self.selected_node, fill="blue")
+

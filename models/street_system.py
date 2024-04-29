@@ -7,7 +7,7 @@ class StreetSystem:
 
     def save(self, file_path):
         data = {
-            'nodes': self.nodes,
+            'nodes': [{**node, 'node_type': node.get('node_type', None)} for node in self.nodes],
             'edges': self.edges
         }
         with open(file_path, 'w') as file:
@@ -16,7 +16,7 @@ class StreetSystem:
     def load(self, file_path):
         with open(file_path, 'r') as file:
             data = json.load(file)
-            self.nodes = data['nodes']
+            self.nodes = [{**node, 'node_type': node.get('node_type', None)} for node in data['nodes']]
             self.edges = data['edges']
 
     def remove_node(self, node_id):
@@ -39,6 +39,14 @@ class StreetSystem:
             print(f"El nodo con ID {node['node_id']} ya existe")
             node['node_id'] = node['node_id'] + 1
             self.add_node(node)
+        if 'node_type' not in node:
+            node['node_type'] = None  # Default value when adding a new node
+
+    def update_node_type(self, node_id, node_type):
+        for node in self.nodes:
+            if node['node_id'] == int(node_id):
+                node['node_type'] = node_type
+                break
 
     def add_edge(self, edge):
         self.edges.append(edge)
