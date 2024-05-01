@@ -1,5 +1,4 @@
 from algorithm.ga import GeneticAlgorithm
-from algorithm.temp_solution import  SolutionAG
 from models.arista import Arista
 from models.nodo import Nodo
 
@@ -38,7 +37,5 @@ class AlgorithmController:
         print("___Solucion__")
         genetic_algorithm.presentar_solucion(solution,400);
 
-        temp_solution = SolutionAG(nodos, aristas)
-        temp_solution.exec()
 
 

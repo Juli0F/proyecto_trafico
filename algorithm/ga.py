@@ -136,3 +136,4 @@ class GeneticAlgorithm:
 
                 if arista.destino.nodo_id not in visitados and arista.destino.type != Type.SALIDA:
                     cola.append(arista.destino.nodo_id)
+        print("Fin")
