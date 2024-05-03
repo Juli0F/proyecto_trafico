@@ -24,7 +24,6 @@ class EdgePropertiesWindow(tk.Toplevel):
         main_frame = tk.Frame(self)
         main_frame.pack(padx=10, pady=10)
 
-        # Campos existentes
         direction_label = tk.Label(main_frame, text="Dirección:")
         direction_label.grid(row=0, column=0, padx=5, pady=5, sticky=tk.E)
         direction_entry = tk.Entry(main_frame, textvariable=self.direction)

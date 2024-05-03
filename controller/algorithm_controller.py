@@ -4,8 +4,10 @@ from models.nodo import Nodo
 
 
 class AlgorithmController:
-    def __init__(self):
-        pass
+    def __init__(self, population, num_gen, mutation):
+        self.population = population.get()
+        self.num_gen = num_gen.get()
+        self.mutation = mutation.get()
 
     def convert(self, street_system):
 
@@ -32,10 +34,10 @@ class AlgorithmController:
         print("aristas, ",aristas)
         print("___INIT_AG____")
 
-        genetic_algorithm = GeneticAlgorithm(nodos, aristas)
-        solution = genetic_algorithm.genetic_algorithm(400)
+        genetic_algorithm = GeneticAlgorithm(nodos, aristas, int(self.population), int(self.num_gen), float(self.mutation))
+        solution = genetic_algorithm.genetic_algorithm(self.population)
         print("___Solucion__")
-        genetic_algorithm.presentar_solucion(solution,400);
+        genetic_algorithm.presentar_solucion(solution,self.population);
 
 
 

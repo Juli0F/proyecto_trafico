@@ -1,15 +1,17 @@
 import random
 
 from models.Type import Type
+from models.config import POBLACION_SIZE, TASA_MUTACION, GENERACIONES
 
 
 class GeneticAlgorithm:
-    def __init__(self, nodos, aristas, poblacion_size = 400, num_generaciones=100, tasa_mutacion=2):
+    def __init__(self, nodos, aristas, poblacion_size, num_generaciones, tasa_mutacion):
         self.nodos = nodos
         self.aristas = aristas
         self.poblacion_size = poblacion_size
         self.num_generaciones = num_generaciones
         self.tasa_mutacion = tasa_mutacion
+        print(f"Configuracion:\n Poblacion: {poblacion_size}\nGeneracion {num_generaciones}\nTasa Mutacion: {tasa_mutacion}")
 
     def initialize_population(self):
         poblacion = []
@@ -27,6 +29,7 @@ class GeneticAlgorithm:
     def fitness(self, individual, total_vehiculos):
         flujo_total = 0
         capacidad_total = sum(arista.max_vehiculos for nodo in self.nodos.values() for arista in nodo.aristas)
+        subutilizacion_total = 0
 
         for nodo in self.nodos.values():
             if nodo.type == Type.ENTRADA:
@@ -43,9 +46,14 @@ class GeneticAlgorithm:
                     flujo = min(flujo, arista.max_vehiculos)
                     flujo_total += flujo
 
-        flujo_total = min(flujo_total, total_vehiculos)
+                    flujo_potencial = arista.min_vehiculos + (
+                                capacidad_porcentaje * (arista.max_vehiculos - arista.min_vehiculos))
+                    subutilizacion = max(0, flujo_potencial - flujo)
+                    subutilizacion_total += subutilizacion
 
-        return flujo_total
+        fitness_score = flujo_total - 0.1 * subutilizacion_total
+
+        return fitness_score
 
     def roulette_selection(self, poblacion, total_vehiculos):
         fitness_total = sum(self.fitness(individual, total_vehiculos) for individual in poblacion)

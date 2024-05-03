@@ -67,11 +67,11 @@ class MainWindow(tk.Tk):
         analyze_button.pack(side='top', pady=20)
 
     def analyze(self):
-        # if self.population_size == 0 or self.mutation_rate == 0 or self.num_generation == 0 or self.target_fitness == 0:
-        #     messagebox.showinfo( "Informacion", "Debe ingresar una configuracion")
-        #     return;
+        if self.population_size == 0 or self.mutation_rate == 0 or self.num_generation == 0:
+            messagebox.showinfo( "Informacion", "Debe ingresar una configuracion")
+            return;
 
-        controller = AlgorithmController()
+        controller = AlgorithmController(self.population_size,self.num_generation,self.mutation_rate)
         controller.convert(self.street_system)
     def delete_node(self):
         if self.selected_node:
@@ -174,7 +174,6 @@ class MainWindow(tk.Tk):
         self.population_size = settings_ag.population_size
         self.mutation_rate = settings_ag.mutation_rate
         self.num_generation = settings_ag.num_generations
-        self.target_fitness = settings_ag.target_fitness
 
     def create_canvas(self):
         self.canvas = tk.Canvas(self, bg="white")
@@ -182,7 +181,7 @@ class MainWindow(tk.Tk):
         self.canvas.bind("<Button-1>", self.on_canvas_click)
 
         self.canvas.pack(padx=10, pady=10)
-        self.canvas.bind("<Button-3>", self.show_context_menu)  # Botón derecho del ratón
+        self.canvas.bind("<Button-3>", self.show_context_menu)
 
     def new_system(self):
         self.street_system = StreetSystem()

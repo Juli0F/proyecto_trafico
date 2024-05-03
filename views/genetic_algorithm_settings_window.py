@@ -1,16 +1,19 @@
 import tkinter as tk
 
+import models.config
+
+
 class GeneticAlgorithmSettingsWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
         self.title("Configuración del Algoritmo Genético")
 
-        self.population_size = tk.IntVar(value=50)
+        self.population_size = tk.IntVar(value=500)
         self.mutation_rate = tk.DoubleVar(value=0.1)
-        self.termination_criteria = tk.StringVar(value="generations")
+        self.termination_criteria = tk.StringVar(value="generacion")
         self.num_generations = tk.IntVar(value=100)
-        self.target_fitness = tk.DoubleVar(value=0.9)
+        self.target_aptitud = tk.DoubleVar(value=0.9)
 
         self.create_widgets()
 
@@ -42,22 +45,17 @@ class GeneticAlgorithmSettingsWindow(tk.Toplevel):
         generations_entry = tk.Entry(main_frame, textvariable=self.num_generations)
         generations_entry.grid(row=3, column=1, padx=5, pady=5)
 
-        fitness_label = tk.Label(main_frame, text="Aptitud objetivo:")
-        fitness_label.grid(row=4, column=0, padx=5, pady=5, sticky=tk.E)
 
-        fitness_entry = tk.Entry(main_frame, textvariable=self.target_fitness)
-        fitness_entry.grid(row=4, column=1, padx=5, pady=5)
+
+
 
         save_button = tk.Button(main_frame, text="Guardar", command=self.save_settings)
         save_button.grid(row=5, column=0, columnspan=2, pady=10)
 
     def save_settings(self):
-        population_size = self.population_size.get()
-        mutation_rate = self.mutation_rate.get()
-        termination_criteria = self.termination_criteria.get()
-        num_generations = self.num_generations.get()
-        target_fitness = self.target_fitness.get()
-
-        print("Configuracion del algoritmo: ", population_size, mutation_rate, termination_criteria, num_generations, target_fitness)
+        models.config.POBLACION_SIZE = self.population_size.get()
+        models.config.TASA_MUTACION = self.mutation_rate.get()
+        models.config.GENERACIONES = self.num_generations.get()
+        print("Configuracion del algoritmo: ",models.config.POBLACION_SIZE )
 
         self.destroy()
