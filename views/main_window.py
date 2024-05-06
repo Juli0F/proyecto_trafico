@@ -11,7 +11,7 @@ from views.edge_properties_window import EdgePropertiesWindow
 from views.node_properties_window import NodePropertiesWindow
 
 from controller.algorithm_controller import AlgorithmController
-
+from views.results import  ResultsWindow
 
 
 class MainWindow(tk.Tk):
@@ -27,7 +27,7 @@ class MainWindow(tk.Tk):
         self.click_delay = 300
         self.node_menu = tk.Menu(self, tearoff=0)
         self.create_widgets()
-        self.create_data_table()
+      #  self.create_data_table()
         self.dialogo = None#Dialog(self)
 
         self.population_size = 0
@@ -69,10 +69,13 @@ class MainWindow(tk.Tk):
     def analyze(self):
         if self.population_size == 0 or self.mutation_rate == 0 or self.num_generation == 0:
             messagebox.showinfo( "Informacion", "Debe ingresar una configuracion")
-            return;
+            return
 
         controller = AlgorithmController(self.population_size,self.num_generation,self.mutation_rate)
-        controller.convert(self.street_system)
+        ag_results = controller.convert(self.street_system)
+        show_result = ResultsWindow(self)
+        show_result.mostrar_resultados(ag_results)
+
     def delete_node(self):
         if self.selected_node:
             node_id = self.node_items.get(self.selected_node)

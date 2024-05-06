@@ -37,7 +37,7 @@ class AlgorithmController:
         genetic_algorithm = GeneticAlgorithm(nodos, aristas, int(self.population), int(self.num_gen), float(self.mutation))
         solution = genetic_algorithm.genetic_algorithm(self.population)
         print("___Solucion__")
-        genetic_algorithm.presentar_solucion(solution,self.population);
+        return genetic_algorithm.presentar_solucion(solution,self.population)
 
 
 

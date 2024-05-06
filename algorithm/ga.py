@@ -109,6 +109,8 @@ class GeneticAlgorithm:
         return mejor_solucion
 
     def presentar_solucion(self, mejor_solucion, total_vehiculos):
+        resultados = []
+        visto = set()
         flujo_acumulado = {nodo.nodo_id: 0 for nodo in self.nodos.values()}
         nodos_entrada = [nodo for nodo in self.nodos.values() if nodo.type == Type.ENTRADA]
 
@@ -141,7 +143,30 @@ class GeneticAlgorithm:
 
                 print(
                     f"{nodo_id} -> {arista.destino.nodo_id}: [{{Porcentaje de tiempo: {tiempo_porcentaje:.2f}}}, {{Vehiculos: {flujo_arista}}}]")
+                # resultado = {
+                #     "desde": nodo_id,
+                #     "hacia": arista.destino.nodo_id,
+                #     "porcentaje_tiempo": f"{tiempo_porcentaje:.2f}",
+                #     "vehiculos": flujo_arista
+                # }
+                resultado = (
+                    nodo_id,
+                    arista.destino.nodo_id,
+                    f"{tiempo_porcentaje:.2f}",
+                    flujo_arista
+                )
+                if resultado not in visto:
+                    visto.add(resultado)
+                    resultados.append({
+                        "desde": nodo_id,
+                        "hacia": arista.destino.nodo_id,
+                        "porcentaje_tiempo": f"{tiempo_porcentaje:.2f}",
+                        "vehiculos": flujo_arista
+                    })
+                    # resultados.append(resultado)
 
                 if arista.destino.nodo_id not in visitados and arista.destino.type != Type.SALIDA:
                     cola.append(arista.destino.nodo_id)
         print("Fin")
+
+        return resultados
