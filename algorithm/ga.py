@@ -24,6 +24,7 @@ class GeneticAlgorithm:
                     tiempos_normalizados = {destino_id: tiempo / total_tiempo for destino_id, tiempo in tiempos.items()}
                     individual[nodo.nodo_id] = tiempos_normalizados
             poblacion.append(individual)
+            print("Poblacion generada", poblacion)
         return poblacion
 
     def fitness(self, individual, total_vehiculos):
@@ -52,7 +53,7 @@ class GeneticAlgorithm:
                     subutilizacion_total += subutilizacion
 
         fitness_score = flujo_total - 0.1 * subutilizacion_total
-
+        print(f"Fitness : {fitness_score}")
         return fitness_score
 
     def roulette_selection(self, poblacion, total_vehiculos):

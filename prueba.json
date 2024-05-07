@@ -1,0 +1,92 @@
+{
+  "nodes": [
+    {
+      "node_id": 1,
+      "x": 98,
+      "y": 136,
+      "node_type": 0
+    },
+    {
+      "node_id": 2,
+      "x": 376,
+      "y": 193,
+      "node_type": 2
+    },
+    {
+      "node_id": 3,
+      "x": 679,
+      "y": 161,
+      "node_type": 1
+    },
+    {
+      "node_id": 4,
+      "x": 396,
+      "y": 51,
+      "node_type": 2
+    },
+    {
+      "node_id": 5,
+      "x": 363,
+      "y": 368,
+      "node_type": 2
+    }
+  ],
+  "edges": [
+    {
+      "edge_id": 1,
+      "source_node": 1,
+      "target_node": 4,
+      "direction": "1 -> 4",
+      "capacity": 100,
+      "capacity_min": 0
+    },
+    {
+      "edge_id": 2,
+      "source_node": 1,
+      "target_node": 5,
+      "direction": "1 -> 5",
+      "capacity": 100,
+      "capacity_min": 0
+    },
+    {
+      "edge_id": 3,
+      "source_node": 4,
+      "target_node": 3,
+      "direction": "4 -> 3",
+      "capacity": 200,
+      "capacity_min": 0
+    },
+    {
+      "edge_id": 4,
+      "source_node": 4,
+      "target_node": 2,
+      "direction": "4 -> 2",
+      "capacity": 35,
+      "capacity_min": 0
+    },
+    {
+      "edge_id": 5,
+      "source_node": 5,
+      "target_node": 2,
+      "direction": "5 -> 2",
+      "capacity": 40,
+      "capacity_min": 0
+    },
+    {
+      "edge_id": 6,
+      "source_node": 2,
+      "target_node": 3,
+      "direction": "2 -> 3",
+      "capacity": 45,
+      "capacity_min": 0
+    },
+    {
+      "edge_id": 7,
+      "source_node": 5,
+      "target_node": 3,
+      "direction": "5 -> 3",
+      "capacity": 50,
+      "capacity_min": 0
+    }
+  ]
+}
